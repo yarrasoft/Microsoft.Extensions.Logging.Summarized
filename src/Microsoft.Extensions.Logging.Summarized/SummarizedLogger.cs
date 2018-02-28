@@ -133,7 +133,7 @@ namespace Microsoft.Extensions.Logging.Summarized
             }
             if (logAction != null)
             {
-                logAction("{EventName} occurred {EventCount} times in the last {EventSeconds} seconds", new object[] { EventName, LoggedEventCount, DateTime.Now.Subtract(startTime).Seconds });
+                logAction("{EventName} occurred {EventCount} times in the last {EventSeconds} seconds", new object[] { EventName, LoggedEventCount, DateTime.Now.Subtract(startTime).TotalSeconds.ToString("0")});
             }
 
         }
