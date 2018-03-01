@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Microsoft.Extensions.Logging.Summarized
 {
@@ -38,58 +39,65 @@ namespace Microsoft.Extensions.Logging.Summarized
         /// Logs an custom event and adds it to the list of loggers with the same profile as this logger
         /// </summary>
         /// <param name="eventName"></param>
-        public void LogEvent(string eventName)
+        public async Task LogEventAsync(string eventName)
         {
-            SummarizedLogger eventLogger;
-            if (!eventNameMap.TryGetValue(eventName, out eventLogger))
+
+            await Task.Run(async () =>
             {
-                lock (mapAddLock)
+                SummarizedLogger eventLogger;
+                if (!eventNameMap.TryGetValue(eventName, out eventLogger))
                 {
-                    if(!eventNameMap.TryGetValue(eventName, out eventLogger))
+                    lock (mapAddLock)
                     {
-                        eventNameMap.Add(eventName, eventLogger = new SummarizedLogger(this.logger, this.LogLevel, eventName));
-                        if (UseLogFrequencyEvents)
+                        if (!eventNameMap.TryGetValue(eventName, out eventLogger))
                         {
-                            eventLogger.SetFrequency(this.LogFrequencyEvents);
-                        }
-                        else
-                        {
-                            eventLogger.SetFrequency(this.LogFrequencyTime);
+                            eventNameMap.Add(eventName, eventLogger = new SummarizedLogger(this.logger, this.LogLevel, eventName));
+                            if (UseLogFrequencyEvents)
+                            {
+                                eventLogger.SetFrequency(this.LogFrequencyEvents);
+                            }
+                            else
+                            {
+                                eventLogger.SetFrequency(this.LogFrequencyTime);
+                            }
                         }
                     }
                 }
-            }
 
-            eventLogger.LogEvent();
+                await eventLogger.LogEventAsync();
+            });
         }
 
 
-        public void LogEvent()
+        public async Task LogEventAsync()
         {
-            if(++LoggedEventCount == 1)
+            await Task.Run(() =>
             {
-                //startTime = Instant.FromDateTimeUtc(DateTime.UtcNow);
-                startTime = DateTime.Now;
-
-                if (!UseLogFrequencyEvents)
+                if (++LoggedEventCount == 1)
                 {
-                    nextLogTime = startTime;
-                }
-            }
+                    //startTime = Instant.FromDateTimeUtc(DateTime.UtcNow);
+                    startTime = DateTime.Now;
 
-            if( UseLogFrequencyEvents && LoggedEventCount % LogFrequencyEvents == 0)
-            {
-                WriteEventLog();
-            }
-            else if(UseLogFrequencyEvents && LoggedEventCount == 1)
-            {
-                WriteEventLog();
-            }
-            else if( ! UseLogFrequencyEvents && DateTime.Now >= nextLogTime)
-            {
-                WriteEventLog();
-                nextLogTime = nextLogTime.Add(LogFrequencyTime);
-            }
+                    if (!UseLogFrequencyEvents)
+                    {
+                        nextLogTime = startTime;
+                    }
+                }
+
+                if (UseLogFrequencyEvents && LoggedEventCount % LogFrequencyEvents == 0)
+                {
+                    WriteEventLog();
+                }
+                else if (UseLogFrequencyEvents && LoggedEventCount == 1)
+                {
+                    WriteEventLog();
+                }
+                else if (!UseLogFrequencyEvents && DateTime.Now >= nextLogTime)
+                {
+                    WriteEventLog();
+                    nextLogTime = nextLogTime.Add(LogFrequencyTime);
+                }
+            });
         }
 
         private void WriteEventLog()
