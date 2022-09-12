@@ -17,6 +17,7 @@ namespace Microsoft.Extensions.Logging.Summarized
             this.logger = logger;
             this.LogLevel = level;
             this.EventName = eventName;
+            id = Guid.NewGuid().ToString();
         }
 
         public bool UseLogFrequencyEvents { get; protected internal set; }
@@ -24,6 +25,8 @@ namespace Microsoft.Extensions.Logging.Summarized
         public LogLevel LogLevel { get; protected internal set; }
 
         public string EventName { get; protected internal set; }
+
+        private string id;
 
         public TimeSpan LogFrequencyTime { get; protected internal set; }
 
@@ -68,6 +71,7 @@ namespace Microsoft.Extensions.Logging.Summarized
             });
         }
 
+        private object writeLock = new object();
 
         public async Task LogEventAsync()
         {
@@ -86,23 +90,46 @@ namespace Microsoft.Extensions.Logging.Summarized
 
                 if (UseLogFrequencyEvents && LoggedEventCount % LogFrequencyEvents == 0)
                 {
-                    WriteEventLog();
+                    lock (writeLock)
+                    {
+                        if (LoggedEventCount % LogFrequencyEvents == 0)
+                        {
+                            WriteEventLog();
+                        }
+                    }
                 }
                 else if (UseLogFrequencyEvents && LoggedEventCount == 1)
                 {
-                    WriteEventLog();
+                    lock (writeLock)
+                    {
+                        if (LoggedEventCount == 1)
+                        {
+                            WriteEventLog();
+                        }
+                    }
                 }
                 else if (!UseLogFrequencyEvents && DateTime.Now >= nextLogTime)
                 {
-                    WriteEventLog();
-                    nextLogTime = nextLogTime.Add(LogFrequencyTime);
+                    lock (writeLock)
+                    {
+                        var now = DateTime.Now;
+                        if (now >= nextLogTime)
+                        {
+                            var nextTime = now.Add(LogFrequencyTime);
+
+                            logger.LogTrace("Writing time based logs. now: {now}, currentNext: {currentNext}, nextNext: {nextNext}, id: {id}", now, nextLogTime, nextTime, id);
+
+                            nextLogTime = nextTime;
+                            WriteEventLog();
+                        }
+                    }
                 }
             });
         }
 
         private void WriteEventLog()
         {
-            if((UseLogFrequencyEvents && LogFrequencyEvents == 0) || (!UseLogFrequencyEvents && LogFrequencyTime.TotalSeconds <= 0))
+            if ((UseLogFrequencyEvents && LogFrequencyEvents == 0) || (!UseLogFrequencyEvents && LogFrequencyTime.TotalSeconds <= 0))
             {
                 throw new ArgumentException("Log event frequency or time not set");
             }
@@ -141,7 +168,7 @@ namespace Microsoft.Extensions.Logging.Summarized
             }
             if (logAction != null)
             {
-                logAction("{EventName} occurred {EventCount} times in the last {EventSeconds} seconds", new object[] { EventName, LoggedEventCount, DateTime.Now.Subtract(startTime).TotalSeconds.ToString("0")});
+                logAction("{EventName} occurred {EventCount} times in the last {EventSeconds} seconds. ({id}}", new object[] { EventName, LoggedEventCount, DateTime.Now.Subtract(startTime).TotalSeconds.ToString("0"), id });
             }
 
         }
