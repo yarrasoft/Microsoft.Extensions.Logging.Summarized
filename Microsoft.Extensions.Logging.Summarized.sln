@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2027
@@ -7,7 +7,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{5C23BA8F-3EA
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Extensions.Logging.Summarized", "src\Microsoft.Extensions.Logging.Summarized\Microsoft.Extensions.Logging.Summarized.csproj", "{38803905-DDF2-4DB5-822B-E2D0B3E2AB4A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Extensions.Logging.Summarized.Tests", "tests\Microsoft.Extensions.Logging.Summarized.Tests\Microsoft.Extensions.Logging.Summarized.Tests.csproj", "{B3D43A3E-14F7-4C22-971D-31CC89E44E2A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Extensions.Logging.Summarized.Tests", "tests\Microsoft.Extensions.Logging.Summarized.Tests\Microsoft.Extensions.Logging.Summarized.Tests.csproj", "{B3D43A3E-14F7-4C22-971D-31CC89E44E2A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{A37DE9BF-6DC1-4AB4-834F-7B48E345B13A}"
 EndProject
